@@ -6,11 +6,11 @@ from util.similarity import multi_similarity_splits
 # TODO: docstring
 class AttendanceChecker:
     
-    def __init__(self, participants_df: pd.DataFrame, grading_df: pd.DataFrame,
+    def __init__(self, participants_df: pd.DataFrame, moodle_df: pd.DataFrame,
                  name_similarity_threshold: float, attendance_duration_threshold: int,
                  unknown_id: str = "unknown"):
         self.participants_df = participants_df
-        self.grading_df = grading_df
+        self.moodle_df = moodle_df
         self.name_similarity_threshold = name_similarity_threshold
         self.attendance_duration_threshold = attendance_duration_threshold
         self.unknown_id = unknown_id
@@ -18,15 +18,15 @@ class AttendanceChecker:
     def _id_from_moodle(self, row: pd.Series):
         name = row["name"]
         matching_rows = []
-        for grading_df_row in self.grading_df.itertuples():
+        for moodle_df_row in self.moodle_df.itertuples():
             # Fuzzy string equality matching due to manual name entering in participants lists.
             # This will most likely not work in 100% of the cases, but if the majority of manual
             # name entries can be mapped to the actual Moodle/KUSSS names, it is good enough.
             # Naturally, this heavily depends on what the manual names actually look like and
             # which similarity metric (and parameterization thereof) is applied here.
             # TODO: include kwargs for multi_similarity_splits in __init__
-            if multi_similarity_splits(grading_df_row.name, name) >= self.name_similarity_threshold:
-                matching_rows.append(grading_df_row)
+            if multi_similarity_splits(moodle_df_row.name, name) >= self.name_similarity_threshold:
+                matching_rows.append(moodle_df_row)
         if len(matching_rows) == 0:
             return pd.Series([0 if row["id"] == self.unknown_id else 1, row["id"]])
         if len(matching_rows) == 1:
@@ -54,5 +54,5 @@ class AttendanceChecker:
         
         attendance_df["attendance_count"] = 1
         attendance_df = attendance_df.groupby("moodle_id").sum().reset_index()
-        attendance_df = pd.merge(attendance_df, self.grading_df, on="moodle_id").sort_values("attendance_count")
+        attendance_df = pd.merge(attendance_df, self.moodle_df, on="moodle_id").sort_values("attendance_count")
         return attendance_df

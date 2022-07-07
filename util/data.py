@@ -78,16 +78,26 @@ def get_zoom_participants_df(participants_file: str, unknown_id: str = "unknown"
     return df
 
 
-def get_full_grading_df(grading_file: str) -> pd.DataFrame:
+def get_moodle_df(moodle_file: str, first_name_col: str = "First name", surname_col: str = "Surname",
+                  id_col: str = "ID number", **kwargs) -> pd.DataFrame:
     """
     TODO: main docstring
     
-    :param grading_file: Path to the full grading CSV file that contains "First name",
-        "Surname", "ID number" and "grade" columns.
+    :param moodle_file: Path to the Moodle CSV file that contains at least the columns
+        ``first_name_col``, ``surname_col`` and ``id_col``.
+    :param first_name_col: The column name containing the first name. Default: "First name"
+    :param surname_col: The column name containing the surname/last name. Default: "Surname"
+    :param id_col: The column name containing the matriculation ID. Default: "ID number"
+    :param kwargs: Additional keyword arguments that are passed to ``pd.read_csv``.
     :return: The processed grading DataFrame.
     """
-    df = pd.read_csv(grading_file)
-    df = df[["First name", "Surname", "ID number", "grade"]]
-    df["name"] = (df["First name"] + " " + df["Surname"]).apply(normalize_string)
-    df.columns = ["first_name", "last_name", "moodle_id", "grade", "name"]
+    df = pd.read_csv(moodle_file, **kwargs)
+    df["name"] = (df[first_name_col] + " " + df[surname_col]).apply(normalize_string)
+    new_cols = []
+    for col in df.columns:
+        if col == id_col:
+            new_cols.append("moodle_id")
+        else:
+            new_cols.append(col)
+    df.columns = new_cols
     return df
