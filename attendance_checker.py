@@ -1,17 +1,19 @@
 import pandas as pd
 
-from util.data import UNKNOWN_ID
 from util.similarity import multi_similarity_splits
 
 
+# TODO: docstring
 class AttendanceChecker:
     
     def __init__(self, participants_df: pd.DataFrame, grading_df: pd.DataFrame,
-                 name_similarity_threshold: float, attendance_duration_threshold: int):
+                 name_similarity_threshold: float, attendance_duration_threshold: int,
+                 unknown_id: str = "unknown"):
         self.participants_df = participants_df
         self.grading_df = grading_df
         self.name_similarity_threshold = name_similarity_threshold
         self.attendance_duration_threshold = attendance_duration_threshold
+        self.unknown_id = unknown_id
     
     def _id_from_moodle(self, row: pd.Series):
         name = row["name"]
@@ -26,7 +28,7 @@ class AttendanceChecker:
             if multi_similarity_splits(grading_df_row.name, name) >= self.name_similarity_threshold:
                 matching_rows.append(grading_df_row)
         if len(matching_rows) == 0:
-            return pd.Series([0 if row["id"] == UNKNOWN_ID else 1, row["id"]])
+            return pd.Series([0 if row["id"] == self.unknown_id else 1, row["id"]])
         if len(matching_rows) == 1:
             return pd.Series([1, matching_rows[0].moodle_id])
         if row["id"] in {mr.moodle_id for mr in matching_rows}:

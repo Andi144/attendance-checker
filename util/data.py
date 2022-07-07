@@ -5,14 +5,13 @@ import pandas as pd
 
 from util.text import normalize_string
 
-UNKNOWN_ID = "unknown"
 
-
-def get_zoom_participants_df(participants_file: str) -> pd.DataFrame:
+def get_zoom_participants_df(participants_file: str, unknown_id: str = "unknown") -> pd.DataFrame:
     """
     TODO: main docstring
     
     :param participants_file: Path to Zoom participants CSV file.
+    :param unknown_id: The ID to use if a valid ID cannot be inferred. Default: "unknown"
     :return: The processed participants DataFrame.
     """
     df = pd.read_csv(participants_file)
@@ -50,10 +49,10 @@ def get_zoom_participants_df(participants_file: str) -> pd.DataFrame:
         # other mail formats (e.g., personal mails or JKU account mails) are treated as if it were missing
         mail = row[mail_col]
         if not isinstance(mail, str):
-            return UNKNOWN_ID
+            return unknown_id
         match = re.search(r"k\d{8}", mail)
         if match is None:
-            return UNKNOWN_ID
+            return unknown_id
         return match.group()
     
     def clean_name(name: str):
