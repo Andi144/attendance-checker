@@ -17,7 +17,11 @@ class AttendanceChecker:
         name = row["name"]
         matching_rows = []
         for grading_df_row in self.grading_df.itertuples():
-            # Fuzzy string equality matching due to manual name entering in participants lists
+            # Fuzzy string equality matching due to manual name entering in participants lists.
+            # This will most likely not work in 100% of the cases, but if the majority of manual
+            # name entries can be mapped to the actual Moodle/KUSSS names, it is good enough.
+            # Naturally, this heavily depends on what the manual names actually look like and
+            # which similarity metric (and parameterization thereof) is applied here.
             # TODO: include kwargs for multi_similarity_splits in __init__
             if multi_similarity_splits(grading_df_row.name, name) >= self.name_similarity_threshold:
                 matching_rows.append(grading_df_row)
