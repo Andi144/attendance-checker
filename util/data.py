@@ -26,7 +26,15 @@ def get_zoom_participants_df(participants_file: str, unknown_id: str = "unknown"
     df = df[[name_col, mail_col, duration_col]]
     
     def extract_id(row: pd.Series):
-        # First, try to extract the ID from the name. Assume at least 3 digits, so something like
+        # First, try to extract the ID from the mail
+        # If the mail is specified, it should be of the form "k<8-digit-matriculation-id>@students.jku.at",
+        # other mail formats (e.g., personal mails or JKU account mails) are treated as if it were missing
+        mail = row[mail_col]
+        if isinstance(mail, str):
+            match = re.search(r"k\d{8}", mail)
+            if match is not None:
+                return match.group()
+        # Otherwise, try to extract the ID from the name. Assume at least 3 digits, so something like
         # "some name 2", e.g., due to double login (or other reasons), does not match
         name = row[name_col]
         match = re.search(r"[kK]?\d{3,}", name)
@@ -44,16 +52,7 @@ def get_zoom_participants_df(participants_file: str, unknown_id: str = "unknown"
                 # ID is without "k" and exactly 8 digits longs
                 assert re.match(r"\d{8}", id_) is not None
                 return "k" + id_
-        # Then, try to extract the ID from the mail
-        # If the mail is specified, it should be of the form "k<8-digit-matriculation-id>@students.jku.at",
-        # other mail formats (e.g., personal mails or JKU account mails) are treated as if it were missing
-        mail = row[mail_col]
-        if not isinstance(mail, str):
-            return unknown_id
-        match = re.search(r"k\d{8}", mail)
-        if match is None:
-            return unknown_id
-        return match.group()
+        return unknown_id
     
     def clean_name(name: str):
         name = normalize_string(name)
