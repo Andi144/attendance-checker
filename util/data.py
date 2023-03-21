@@ -78,20 +78,28 @@ def get_zoom_participants_df(participants_file: str, unknown_id: str = "unknown"
 
 
 def get_moodle_df(moodle_file: str, first_name_col: str = "First name", surname_col: str = "Surname",
-                  id_col: str = "ID number", **kwargs) -> pd.DataFrame:
+                  full_name_col: str = None, id_col: str = "ID number", **kwargs) -> pd.DataFrame:
     """
     TODO: main docstring
     
     :param moodle_file: Path to the Moodle CSV file that contains at least the columns
-        ``first_name_col``, ``surname_col`` and ``id_col``.
+        ``id_col`` and either ``first_name_col`` together with ``surname_col`` or just
+        ``full_name_col``. If ``full_name_col`` is specified, ``first_name_col`` and
+        ``surname_col`` are both ignored.
     :param first_name_col: The column name containing the first name. Default: "First name"
     :param surname_col: The column name containing the surname/last name. Default: "Surname"
+    :param full_name_col: The column name containing the full name (combination of first
+        name followed by the surname, in exactly this order). Default: None (unspecified)
     :param id_col: The column name containing the matriculation ID. Default: "ID number"
     :param kwargs: Additional keyword arguments that are passed to ``pd.read_csv``.
     :return: The processed grading DataFrame.
     """
     df = pd.read_csv(moodle_file, **kwargs)
-    df["name"] = (df[first_name_col] + " " + df[surname_col]).apply(normalize_string)
+    if full_name_col is not None:
+        df["name"] = df[full_name_col]
+    else:
+        df["name"] = df[first_name_col] + " " + df[surname_col]
+    df["name"] = df["name"].apply(normalize_string)
     new_cols = []
     for col in df.columns:
         if col == id_col:
